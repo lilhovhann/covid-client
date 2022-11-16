@@ -1,5 +1,6 @@
 package com.introduct.covid.service;
 
+import com.introduct.covid.interfaces.CovidServiceInterface;
 import com.introduct.covid.CovidApplication;
 import com.introduct.covid.domain.CovidData;
 import java.util.Optional;
@@ -28,7 +29,7 @@ public class CovidService implements CovidServiceInterface {
         country = formatString(country);
         
         final String url = baseUrl + "/cases?country=" + country;
-        JSONObject result = (JSONObject) get(url, country).get("All");
+        JSONObject result = (JSONObject) fetch(url, country).get("All");
 
         if (result != null) {
             return Optional.of(new CovidData(
@@ -51,7 +52,7 @@ public class CovidService implements CovidServiceInterface {
         
         final String url = baseUrl + "/vaccines?country=" + country;
 
-        JSONObject result = (JSONObject) get(url, country).get("Global");
+        JSONObject result = (JSONObject) fetch(url, country).get("Global");
         JSONObject nestedResult = (JSONObject) result.get("All");
         //get first
         Long people_vaccinated = (Long) nestedResult.get("people_vaccinated");
@@ -61,16 +62,17 @@ public class CovidService implements CovidServiceInterface {
 
     }
     
+    @Override
     public Optional<Long> getNewConfirmedCases(String country){
         country = formatString(country);
         final String url = baseUrl + "/history?country=" + country+"&status=confirmed";
-        JSONObject result = (JSONObject) get(url, country).get("All");
+        JSONObject result = (JSONObject) fetch(url, country).get("All");
         JSONObject nestedResult = (JSONObject) result.get("dates");
         return nestedResult.values().stream().findFirst();
        
     }
 
-    private JSONObject get(String url, String country) {
+    public JSONObject fetch(String url, String country) {
         RestTemplate restTemplate = new RestTemplate();
         String result = restTemplate.getForObject(url, String.class);
         JSONParser parser = new JSONParser();
@@ -85,7 +87,7 @@ public class CovidService implements CovidServiceInterface {
         return parsedData;
     }
     
-    private String formatString(String input){
+    protected String formatString(String input){
         char firstLetter = Character.toUpperCase(input.charAt(0));
         return firstLetter + input.substring(1, input.length()).toLowerCase();
     }
